@@ -32,4 +32,14 @@ class WeatherRepository {
             }
         }
     }
+
+    suspend fun updateFavoriteCity(id: Int, newName: String) {
+        SupabaseClient.client.postgrest["favorite_cities"].update(
+            mapOf("city_name" to newName)
+        ) {
+            filter {
+                eq("id", id)
+            }
+        }
+    }
 }

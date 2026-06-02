@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:allowBackup="true"
@@ -11,7 +13,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Skyglass">
         <activity
-            android:name=".MainActivity"
+            android:name="com.example.skyglass.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Skyglass">
             <intent-filter>
