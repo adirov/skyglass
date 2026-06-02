@@ -6,14 +6,13 @@ import androidx.lifecycle.viewModelScope
 import com.example.skyglass.data.model.FavoriteCity
 import com.example.skyglass.data.model.WeatherResponse
 import com.example.skyglass.data.repository.WeatherRepository
-import com.example.skyglass.utils.NotificationHelper
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class WeatherViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = WeatherRepository()
-    private val notificationHelper = NotificationHelper(application)
     
     private val _weatherData = MutableStateFlow<WeatherResponse?>(null)
     val weatherData = _weatherData.asStateFlow()
@@ -24,8 +23,20 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
     private val _error = MutableStateFlow<String?>(null)
     val error = _error.asStateFlow()
 
+    // Поток для внутреннего уведомления
+    private val _inAppMessage = MutableStateFlow<String?>(null)
+    val inAppMessage = _inAppMessage.asStateFlow()
+
     init {
         loadFavorites()
+    }
+
+    fun showInstantNotification(message: String) {
+        viewModelScope.launch {
+            _inAppMessage.value = message
+            delay(3000) // Показывать 3 секунды
+            _inAppMessage.value = null
+        }
     }
 
     fun fetchWeather(city: String) {
@@ -34,9 +45,9 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
             result.onSuccess {
                 _weatherData.value = it
                 _error.value = null
-                notificationHelper.showNotification("Погода обновлена", "В городе ${it.name} сейчас ${it.main.temp}°C")
+                showInstantNotification("Погода в ${it.name} обновлена: ${it.main.temp}°C")
             }.onFailure {
-                _error.value = it.message ?: "Unknown error"
+                _error.value = it.message ?: "Ошибка сети"
             }
         }
     }
@@ -46,7 +57,7 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
             try {
                 _favoriteCities.value = repository.getFavoriteCities()
             } catch (e: Exception) {
-                _error.value = "Ошибка загрузки избранного: ${e.message}"
+                _error.value = "Ошибка загрузки избранного"
             }
         }
     }
@@ -56,8 +67,9 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
             try {
                 repository.addFavoriteCity(FavoriteCity(city_name = cityName))
                 loadFavorites()
+                showInstantNotification("$cityName добавлен в избранное!")
             } catch (e: Exception) {
-                _error.value = "Ошибка добавления: ${e.message}"
+                _error.value = "Ошибка добавления"
             }
         }
     }
@@ -67,8 +79,21 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
             try {
                 repository.deleteFavoriteCity(id)
                 loadFavorites()
+                showInstantNotification("Город удален")
             } catch (e: Exception) {
-                _error.value = "Ошибка удаления: ${e.message}"
+                _error.value = "Ошибка удаления"
+            }
+        }
+    }
+
+    fun updateFavorite(id: Int, newName: String) {
+        viewModelScope.launch {
+            try {
+                repository.updateFavoriteCity(id, newName)
+                loadFavorites()
+                showInstantNotification("Обновлено: $newName")
+            } catch (e: Exception) {
+                _error.value = "Ошибка обновления"
             }
         }
     }
