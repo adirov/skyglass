@@ -22,3 +22,10 @@ data class Weather(
     val description: String,
     val icon: String
 )
+
+@Serializable
+data class FavoriteCity(
+    val id: Int? = null,
+    val user_id: String? = null,
+    val city_name: String
+)
